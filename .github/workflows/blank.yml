@@ -1,0 +1,105 @@
+# Actions workflow that checks an org/user's repos and returns a csv of all the users along with repo permissions
+# Make sure to set a secret called PAT with a Personal Access Token with org access, `read:org` and `repo`
+
+name: Permissions Report
+
+# Controls when the workflow will run
+on:
+  # Triggers at a set time
+  schedule:
+  - cron: "0 2 * * 1-5"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  report:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Run the commands
+      - name: Get organization repos, users, and into a csv
+        run: |
+          repo_last_page=($(curl -I "https://api.github.com/orgs/$GITHUB_REPOSITORY_OWNER/repos?per_page=100" -H "authorization: Bearer ${{ secrets.PAT }}" | grep '^link:' | grep -o 'page=[0-9]*' | grep -o '[0-9]*' | tail -1))
+          echo $repo_last_page
+          if [ -z $repo_last_page]; then
+          echo "\$repo_last_page is empty"
+          repo_last_page=1
+          fi
+          while [ $repo_last_page -gt 0 ]
+          do
+          repos_from_page=$(curl -s -X GET "https://api.github.com/orgs/$GITHUB_REPOSITORY_OWNER/repos?page=$repo_last_page&per_page=100" -H "Authorization: Bearer ${{ secrets.PAT }}" | jq .[].name)
+          repos+="$repos_from_page"
+          repo_last_page=$((repo_last_page-1))
+          done          
+          echo $repos
+          repos=(${repos[@]//\"/ })
+          for r in "${repos[@]}"; do
+          echo $r
+          collab_last_page=($(curl -I "https://api.github.com/repos/$GITHUB_REPOSITORY_OWNER/${r}/collaborators?per_page=100" -H "Authorization: Bearer ${{ secrets.PAT }}" | grep '^link:' | grep -o 'page=[0-9]*' | grep -o '[0-9]*' | tail -1))
+          echo $collab_last_page
+          if [ -z $collab_last_page]; then
+          echo "\$collab_last_page is empty"
+          collab_last_page=1
+          fi
+          while [ $collab_last_page -gt 0 ]
+          do
+          collabs=$(curl -s -X GET "https://api.github.com/repos/$GITHUB_REPOSITORY_OWNER/${r}/collaborators?page=$collab_last_page&per_page=100" -H "Authorization: Bearer ${{ secrets.PAT }}" | jq '.[ ] | {login,role_name } + {repo: "'$r'"}')
+          echo $collabs
+          collabs_array+="$collabs"
+          collab_last_page=$((collab_last_page-1))
+          done
+          done
+          collabs_array=$(echo $collabs_array | sed 's/}/},/g')
+          echo $collabs_array
+          collabs_array=$(echo $collabs_array | sed 's/,$//g')
+          echo $collabs_array
+          collabs_array="[$collabs_array]" 
+          echo $collabs_array
+          echo $collabs_array | jq -r 'map({login,role_name,repo} | join(", ")) | join("\n")' > collab.csv
+      # Add header to csv
+      - name: Add header to csv
+        run: sed -i 1i"login,role_name,repo" collab.csv
+      #Check is Permissions-Report director exists
+      - name: Check if Permissions-Report directory exists, if not create it
+        run: |
+          if [ -d "$GITHUB_WORKSPACE/Permissions-Report" ]; then
+          echo "Directory exists"
+          else
+          mkdir "$GITHUB_WORKSPACE/Permissions-Report"
+          fi
+      #Change the csv name to date and time
+      - name: rename to date and time
+        run: |
+          date=$(date +%Y-%m-%d)
+          time=$(date +%H:%M:%S)
+          mv collab.csv $GITHUB_WORKSPACE/Permissions-Report/collab_$date-$time.csv
+    
+      - name: Push CSV back to repo
+        run:  |
+          git config --global user.name 'GitHub reports' 
+          git config --global user.email 'wilsonwong1990@gmail.com'
+          git add -A
+          git commit -m '[automated commit] Adding daily report'
+          git push
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Runs a single command using the runners shell
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+      # Runs a set of commands using the runners shell
+      - name: Run a multi-line script
+        run: |
+          echo Add other actions to build,
+          echo test, and deploy your project.
