@@ -81,8 +81,7 @@ jobs:
     
       - name: Push CSV back to repo
         run:  |
-          git config --global user.name 'GitHub reports' 
-          git config --global user.email 'wilsonwong1990@gmail.com'
+          git config --global user.name "$GITHUB_ACTOR"
           git add -A
           git commit -m '[automated commit] Adding daily report'
           git push
