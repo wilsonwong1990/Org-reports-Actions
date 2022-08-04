@@ -10,6 +10,7 @@ runs:
 
       # Run the commands
       - name: Get organization repos, users, and into a csv
+        shell: bash
         run: |
           repo_last_page=($(curl -I "https://api.github.com/orgs/$GITHUB_REPOSITORY_OWNER/repos?per_page=100" -H "authorization: Bearer $PAT" | grep '^link:' | grep -o 'page=[0-9]*' | grep -o '[0-9]*' | tail -1))
           echo $repo_last_page
@@ -50,9 +51,11 @@ runs:
           echo $collabs_array | jq -r 'map({login,role_name,repo} | join(", ")) | join("\n")' > collab.csv
       # Add header to csv
       - name: Add header to csv
+        shell: bash
         run: sed -i 1i"login,role_name,repo" collab.csv
       #Check is Permissions-Report director exists
       - name: Check if Permissions-Report directory exists, if not create it
+        shell: bash
         run: |
           if [ -d "$GITHUB_WORKSPACE/Permissions-Report" ]; then
           echo "Directory exists"
@@ -61,12 +64,14 @@ runs:
           fi
       #Change the csv name to date and time
       - name: rename to date and time
+        shell: bash
         run: |
           date=$(date +%Y-%m-%d)
           time=$(date +%H:%M:%S)
           mv collab.csv $GITHUB_WORKSPACE/Permissions-Report/collab_$date-$time.csv
     
       - name: Push CSV back to repo
+        shell: bash
         run:  |
           git config --global user.name "$GITHUB_ACTOR"
           git add -A
