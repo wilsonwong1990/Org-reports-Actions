@@ -59,8 +59,6 @@ runs:
       # Add header to csv
       - name: Add header to csv
         shell: bash
-        env:
-          PAT: ${{ inputs.PAT }}
         run: sed -i 1i"login,role_name,repo" collab.csv
       #Check is Permissions-Report director exists
       - name: Check if Permissions-Report directory exists, if not create it
@@ -74,8 +72,6 @@ runs:
       #Change the csv name to date and time
       - name: rename to date and time
         shell: bash
-        env:
-          PAT: ${{ inputs.PAT }}
         run: |
           date=$(date +%Y-%m-%d)
           time=$(date +%H:%M:%S)
