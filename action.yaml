@@ -23,8 +23,6 @@ jobs:
 
       # Run the commands
       - name: Get organization repos, users, and into a csv
-        env:
-          PAT: ${{ secrets.PAT }}
         run: |
           repo_last_page=($(curl -I "https://api.github.com/orgs/$GITHUB_REPOSITORY_OWNER/repos?per_page=100" -H "authorization: Bearer $PAT" | grep '^link:' | grep -o 'page=[0-9]*' | grep -o '[0-9]*' | tail -1))
           echo $repo_last_page
