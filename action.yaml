@@ -2,9 +2,15 @@
 # Make sure to set a secret called PAT with a Personal Access Token with org access, `read:org` and `repo`
 
 name: Permissions Report
+inputs:
+  PAT:
+    description: 'Your PAT for this workflow to work.'
+    required: true
 
 runs:
     using: "composite"
+    env:
+      PAT: ${{ input.PAT }}
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
