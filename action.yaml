@@ -2,10 +2,6 @@
 # Make sure to set a secret called PAT with a Personal Access Token with org access, `read:org` and `repo`
 
 name: Permissions Report
-inputs:
-  PAT:
-    description: 'Your PAT for this workflow to work.'
-    required: true
 
 runs:
     using: "composite"
@@ -17,7 +13,7 @@ runs:
       - name: Get organization repos, users, and into a csv
         shell: bash
         env:
-          PAT: {{ inputs.PAT }}
+          PAT: {{ secrets.PAT }}
         run: |
           repo_last_page=($(curl -I "https://api.github.com/orgs/$GITHUB_REPOSITORY_OWNER/repos?per_page=100" -H "authorization: Bearer $PAT" | grep '^link:' | grep -o 'page=[0-9]*' | grep -o '[0-9]*' | tail -1))
           echo $repo_last_page
@@ -60,7 +56,7 @@ runs:
       - name: Add header to csv
         shell: bash
         env:
-          PAT: {{ inputs.PAT }}
+          PAT: {{ secrets.PAT }}
         run: sed -i 1i"login,role_name,repo" collab.csv
       #Check is Permissions-Report director exists
       - name: Check if Permissions-Report directory exists, if not create it
@@ -75,7 +71,7 @@ runs:
       - name: rename to date and time
         shell: bash
         env:
-          PAT: {{ inputs.PAT }}
+          PAT: {{ secrets.PAT }}
         run: |
           date=$(date +%Y-%m-%d)
           time=$(date +%H:%M:%S)
@@ -84,7 +80,7 @@ runs:
       - name: Push CSV back to repo
         shell: bash
         env:
-          PAT: {{ inputs.PAT }}
+          PAT: {{ secrets.PAT }}
         run:  |
           git config --global user.name "$GITHUB_ACTOR"
           git add -A
