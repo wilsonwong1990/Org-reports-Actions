@@ -1,0 +1,19 @@
+# Actions workflow that checks an org/user's repos and returns a csv of all the users along with repo permissions
+
+name: Permissions Report caller
+
+# Controls when the workflow will run
+on:
+  # Triggers at a set time
+  schedule:
+  - cron: "0 2 * * 1-5"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  call-workflow-passing-data:
+    - uses: wilsonwong1990/Org-reports-Action/.github/workflow/action-reusable.yml@main
+    with:
+    secrets:
+    PAT: ${{ secrets.PAT }}
