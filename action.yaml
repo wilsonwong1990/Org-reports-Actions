@@ -2,14 +2,12 @@
 
 name: Permissions Report
 
-# Controls when the workflow will run
+# Acts on `workflow_call` to make this reusable
 on:
-  # Triggers at a set time
-  schedule:
-  - cron: "0 2 * * 1-5"
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  workflow_call:
+    secrets:
+      PAT:
+        required: true  
 
 jobs:
   report:
