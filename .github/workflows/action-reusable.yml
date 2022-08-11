@@ -1,7 +1,7 @@
 
 # Actions workflow that checks an org/user's repos and returns a csv of all the users along with repo permissions
 
-name: Permissions Report
+name: Permissions Report Reusable
 
 # Acts on `workflow_call` to make this reusable
 on:
