@@ -13,7 +13,7 @@ on:
 
 jobs:
   call-workflow-passing-data:
-    uses: wilsonwong1990/Org-reports-Action/.github/workflows/action-reusable.yaml@main
+    uses: wilsonwong1990/Org-reports-Action/.github/workflows/action-reusable.yml@main
     with:
     secrets:
       PAT: ${{ secrets.PAT }}
