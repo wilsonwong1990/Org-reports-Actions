@@ -21,7 +21,7 @@ jobs:
       # Run the commands
       - name: Get organization repos, users, and into a csv
         run: |
-          repo_last_page=($(curl -I "https://api.github.com/orgs/$GITHUB_REPOSITORY_OWNER/repos?per_page=100" -H "authorization: Bearer ${{ inputs.PAT }}" | grep '^link:' | grep -o 'page=[0-9]*' | grep -o '[0-9]*' | tail -1))
+          repo_last_page=($(curl -I "https://api.github.com/orgs/$GITHUB_REPOSITORY_OWNER/repos?per_page=100" -H "authorization: Bearer $PAT" | grep '^link:' | grep -o 'page=[0-9]*' | grep -o '[0-9]*' | tail -1))
           echo $repo_last_page
           if [ -z $repo_last_page]; then
           echo "\$repo_last_page is empty"
@@ -29,7 +29,7 @@ jobs:
           fi
           while [ $repo_last_page -gt 0 ]
           do
-          repos_from_page=$(curl -s -X GET "https://api.github.com/orgs/$GITHUB_REPOSITORY_OWNER/repos?page=$repo_last_page&per_page=100" -H "Authorization: Bearer ${{ inputs.PAT }}" | jq .[].name)
+          repos_from_page=$(curl -s -X GET "https://api.github.com/orgs/$GITHUB_REPOSITORY_OWNER/repos?page=$repo_last_page&per_page=100" -H "Authorization: Bearer $PAT" | jq .[].name)
           repos+="$repos_from_page"
           repo_last_page=$((repo_last_page-1))
           done          
@@ -37,7 +37,7 @@ jobs:
           repos=(${repos[@]//\"/ })
           for r in "${repos[@]}"; do
           echo $r
-          collab_last_page=($(curl -I "https://api.github.com/repos/$GITHUB_REPOSITORY_OWNER/${r}/collaborators?per_page=100" -H "Authorization: Bearer ${{ inputs.PAT }}" | grep '^link:' | grep -o 'page=[0-9]*' | grep -o '[0-9]*' | tail -1))
+          collab_last_page=($(curl -I "https://api.github.com/repos/$GITHUB_REPOSITORY_OWNER/${r}/collaborators?per_page=100" -H "Authorization: Bearer $PAT" | grep '^link:' | grep -o 'page=[0-9]*' | grep -o '[0-9]*' | tail -1))
           echo $collab_last_page
           if [ -z $collab_last_page]; then
           echo "\$collab_last_page is empty"
@@ -45,7 +45,7 @@ jobs:
           fi
           while [ $collab_last_page -gt 0 ]
           do
-          collabs=$(curl -s -X GET "https://api.github.com/repos/$GITHUB_REPOSITORY_OWNER/${r}/collaborators?page=$collab_last_page&per_page=100" -H "Authorization: Bearer ${{ inputs.PAT }}" | jq '.[ ] | {login,role_name } + {repo: "'$r'"}')
+          collabs=$(curl -s -X GET "https://api.github.com/repos/$GITHUB_REPOSITORY_OWNER/${r}/collaborators?page=$collab_last_page&per_page=100" -H "Authorization: Bearer $PAT" | jq '.[ ] | {login,role_name } + {repo: "'$r'"}')
           echo $collabs
           collabs_array+="$collabs"
           collab_last_page=$((collab_last_page-1))
@@ -58,6 +58,8 @@ jobs:
           collabs_array="[$collabs_array]" 
           echo $collabs_array
           echo $collabs_array | jq -r 'map({login,role_name,repo} | join(", ")) | join("\n")' > collab.csv
+        with:
+          PAT: ${{ inputs.PAT }}
       # Add header to csv
       - name: Add header to csv
         run: sed -i 1i"login,role_name,repo" collab.csv
